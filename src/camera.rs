@@ -5,92 +5,55 @@ use crate::utils::{linear_to_gamma, Color, Point3};
 use crate::world::World;
 use bytemuck::{Pod, Zeroable};
 use glm::{vec3, Vec3};
-use image::RgbImage;
 use rayon::prelude::*;
 
+#[repr(C)]
+#[derive(Copy, Clone, Pod, Zeroable)]
+pub struct Pixel {
+	r: u8,
+	g: u8,
+	b: u8,
+	a: u8,
+}
 pub struct Camera {
-	image_width: u32,
-	image_height: u32,
-	pixel_delta_u: Vec3,
-	pixel_delta_v: Vec3,
-	camera_center: Vec3,
-	pixel00_loc: Vec3,
-	samples_per_pixel: u32,
-	max_depth: u32,
+	pub samples_per_pixel: u32,
+	pub max_depth: u32,
+	pub fov: f32,
+	pub look_from: Point3,
+	pub look_at: Point3,
 }
 impl Camera {
-	pub fn new(
-		image_width: u32,
-		image_height: u32,
-		samples_per_pixel: u32,
-		max_depth: u32,
-		fov: f32,
-		look_from: Point3,
-		look_at: Point3,
-	) -> Self {
-		let camera_center = look_from;
+	pub fn render(&self, world: &World, buffer: &mut [Pixel], width: u32, height: u32) {
+		let camera_center = self.look_from;
 
-		let focal_length = (look_from - look_at).magnitude();
-		let theta = fov.to_radians();
+		let focal_length = (self.look_from - self.look_at).magnitude();
+		let theta = self.fov.to_radians();
 		let h = (theta / 2.0).tan();
 		let viewport_height = 2.0 * h * focal_length;
-		let viewport_width =
-			viewport_height * (image_width as f32 / image_height as f32);
+		let viewport_width = viewport_height * (width as f32 / height as f32);
 
 		let up_vector = vec3(0.0, 1.0, 0.0);
 
-		let w = (look_from - look_at).normalize();
+		let w = (self.look_from - self.look_at).normalize();
 		let u = up_vector.cross(&w).normalize();
 		let v = w.cross(&u);
 
 		let viewport_u = viewport_width * u;
 		let viewport_v = viewport_height * -v;
 
-		let pixel_delta_u = viewport_u / (image_width as f32);
-		let pixel_delta_v = viewport_v / (image_height as f32);
+		let pixel_delta_u = viewport_u / (width as f32);
+		let pixel_delta_v = viewport_v / (height as f32);
 
-		let viewport_upper_left = camera_center
-			- (focal_length * w)
-			- viewport_u / 2.0
-			- viewport_v / 2.0;
-		let pixel00_loc =
-			viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
-
-		Self {
-			image_width,
-			image_height,
-			pixel_delta_u,
-			pixel_delta_v,
-			camera_center,
-			pixel00_loc,
-			samples_per_pixel,
-			max_depth,
-		}
-	}
-	pub fn render(&self, world: &World) {
-		let mut image = RgbImage::new(self.image_width, self.image_height);
-
-		#[repr(C)]
-		#[derive(Copy, Clone, Pod, Zeroable)]
-		struct Pixel {
-			r: u8,
-			g: u8,
-			b: u8,
-		}
-
-		let mut buffer = vec![
-			Pixel { r: 0, g: 0, b: 0 };
-			self.image_width as usize
-				* self.image_height as usize
-		];
+		let viewport_upper_left = camera_center - (focal_length * w) - viewport_u / 2.0 - viewport_v / 2.0;
+		let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
 		buffer.par_iter_mut().enumerate().for_each(|(i, pixel)| {
-			let y = i as u32 / self.image_width;
-			let x = i as u32 % self.image_width;
+			let y = i as u32 / width;
+			let x = i as u32 % width;
 
 			let mut color = Color::zeros();
 			for _ in 0..self.samples_per_pixel {
-				let ray = self.get_ray(x, y);
+				let ray = get_ray(x, y, camera_center, pixel00_loc, pixel_delta_u, pixel_delta_v);
 				color += ray_color_iterative(ray, world, self.max_depth);
 			}
 			color /= self.samples_per_pixel as f32;
@@ -104,38 +67,29 @@ impl Camera {
 				(256.0 * INTERVAL.clamp(color.y)) as u8,
 				(256.0 * INTERVAL.clamp(color.z)) as u8,
 			];
+
 			pixel.r = rgb[0];
 			pixel.g = rgb[1];
 			pixel.b = rgb[2];
+			pixel.a = 255;
 		});
-
-		image.copy_from_slice(bytemuck::cast_slice(&buffer));
-
-		image.save("main.png").unwrap();
 	}
-
-	fn get_ray(&self, x: u32, y: u32) -> Ray {
-		let offset = vec3(rng::f32() - 0.5, rng::f32() - 0.5, 0.0);
-		let pixel_sample = self.pixel00_loc
-			+ ((x as f32 + offset.x) * self.pixel_delta_u)
-			+ ((y as f32 + offset.y) * self.pixel_delta_v);
-		let ray_origin = self.camera_center;
-		let ray_direction = pixel_sample - self.camera_center;
-		Ray::new(ray_origin, ray_direction)
-	}
+}
+fn get_ray(x: u32, y: u32, camera_center: Vec3, pixel00_loc: Vec3, pixel_delta_u: Vec3, pixel_delta_v: Vec3) -> Ray {
+	let offset = vec3(rng::f32() - 0.5, rng::f32() - 0.5, 0.0);
+	let pixel_sample = pixel00_loc + ((x as f32 + offset.x) * pixel_delta_u) + ((y as f32 + offset.y) * pixel_delta_v);
+	let ray_origin = camera_center;
+	let ray_direction = pixel_sample - camera_center;
+	Ray::new(ray_origin, ray_direction)
 }
 #[allow(unused)]
 fn ray_color(ray: Ray, world: &World, depth: u32) -> Color {
 	if depth == 0 {
 		return Color::zeros();
 	}
-	if let Some(hit_record) =
-		world.hit(ray, Interval::new(0.001, f32::INFINITY))
-	{
+	if let Some(hit_record) = world.hit(ray, Interval::new(0.001, f32::INFINITY)) {
 		let mat = world.get_material(hit_record.material);
-		return if let Some((scattered, attenuation)) =
-			mat.scatter(ray, hit_record)
-		{
+		return if let Some((scattered, attenuation)) = mat.scatter(ray, hit_record) {
 			attenuation.component_mul(&ray_color(scattered, world, depth - 1))
 		} else {
 			Color::zeros()
@@ -150,13 +104,9 @@ fn ray_color_iterative(ray: Ray, world: &World, depth: u32) -> Color {
 
 	let mut current_ray = ray;
 	for _ in 0..depth {
-		if let Some(hit_record) =
-			world.hit(current_ray, Interval::new(0.001, f32::INFINITY))
-		{
+		if let Some(hit_record) = world.hit(current_ray, Interval::new(0.001, f32::INFINITY)) {
 			let mat = world.get_material(hit_record.material);
-			let (hit_color, next_ray) = if let Some((scattered, attenuation)) =
-				mat.scatter(current_ray, hit_record)
-			{
+			let (hit_color, next_ray) = if let Some((scattered, attenuation)) = mat.scatter(current_ray, hit_record) {
 				(attenuation, Some(scattered))
 			} else {
 				(Color::new(0.0, 0.0, 0.0), None)
@@ -187,13 +137,9 @@ fn ray_color_simple(ray: Ray, world: &World, depth: u32) -> Color {
 
 	let mut current_ray = ray;
 	for _ in 0..depth {
-		if let Some(hit_record) =
-			world.hit(current_ray, Interval::new(0.001, f32::INFINITY))
-		{
+		if let Some(hit_record) = world.hit(current_ray, Interval::new(0.001, f32::INFINITY)) {
 			let mat = world.get_material(hit_record.material);
-			let (hit_color, next_ray) = if let Some((scattered, attenuation)) =
-				mat.scatter(current_ray, hit_record)
-			{
+			let (hit_color, next_ray) = if let Some((scattered, attenuation)) = mat.scatter(current_ray, hit_record) {
 				(attenuation, Some(scattered))
 			} else {
 				(Color::new(0.0, 0.0, 0.0), None)
@@ -218,11 +164,7 @@ fn ray_color_simple(ray: Ray, world: &World, depth: u32) -> Color {
 
 	let bgc = background_color(current_ray);
 
-	if first_color {
-		bgc
-	} else {
-		color.component_mul(&bgc)
-	}
+	if first_color { bgc } else { color.component_mul(&bgc) }
 }
 fn background_color(ray: Ray) -> Color {
 	let unit_direction = ray.direction().normalize();
