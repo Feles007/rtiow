@@ -41,14 +41,14 @@ impl State {
 	pub fn request_redraw(&self) {
 		self.window.request_redraw();
 	}
-	pub fn update(&mut self, control_map: &mut ControlMap, _delta_time: f32) {
-		if control_map.zoom_in {
-			self.camera.fov -= 0.1;
-		} else if control_map.zoom_out {
-			self.camera.fov += 0.1;
-		}
+	pub fn update(&mut self, control_map: &mut ControlMap, delta_time: f32) {
+		let zoom_speed = 10.0;
 
-		*control_map = Default::default();
+		if control_map.zoom_in {
+			self.camera.fov -= zoom_speed * delta_time;
+		} else if control_map.zoom_out {
+			self.camera.fov += zoom_speed * delta_time;
+		}
 	}
 	pub fn render(&mut self) {
 		let frame = self.pixels.frame_mut();

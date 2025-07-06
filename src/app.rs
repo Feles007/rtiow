@@ -55,6 +55,9 @@ impl ApplicationHandler for App {
 			WindowEvent::CloseRequested => {
 				event_loop.exit();
 			},
+			WindowEvent::Moved { .. } => {
+				*control_map = ControlMap::default();
+			},
 			WindowEvent::KeyboardInput { event, .. } => {
 				let (code, pressed) = {
 					let (key, pressed) = match event {
@@ -89,6 +92,8 @@ impl ApplicationHandler for App {
 				let elapsed = start.elapsed();
 
 				*delta_time = elapsed.as_secs_f32();
+
+				println!("Frame time: {:?}", elapsed);
 
 				state.request_redraw();
 			},
