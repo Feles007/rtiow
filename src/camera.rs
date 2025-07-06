@@ -1,7 +1,8 @@
 use crate::interval::Interval;
 use crate::ray::Ray;
 use crate::rng;
-use crate::utils::{linear_to_gamma, Color, Point3};
+use crate::state::make_look;
+use crate::utils::{linear_to_gamma, Color};
 use crate::world::World;
 use bytemuck::{Pod, Zeroable};
 use glm::{vec3, Vec3};
@@ -19,14 +20,16 @@ pub struct Camera {
 	pub samples_per_pixel: u32,
 	pub max_depth: u32,
 	pub fov: f32,
-	pub look_from: Point3,
-	pub look_at: Point3,
+	pub location: Vec3,
+	pub pitch: f32,
+	pub yaw: f32,
 }
 impl Camera {
 	pub fn render(&self, world: &World, buffer: &mut [Pixel], width: u32, height: u32) {
-		let camera_center = self.look_from;
+		let camera_center = self.location;
+		let direction = make_look(self.pitch, self.yaw);
 
-		let focal_length = (self.look_from - self.look_at).magnitude();
+		let focal_length = direction.magnitude();
 		let theta = self.fov.to_radians();
 		let h = (theta / 2.0).tan();
 		let viewport_height = 2.0 * h * focal_length;
@@ -34,7 +37,7 @@ impl Camera {
 
 		let up_vector = vec3(0.0, 1.0, 0.0);
 
-		let w = (self.look_from - self.look_at).normalize();
+		let w = direction.normalize();
 		let u = up_vector.cross(&w).normalize();
 		let v = w.cross(&u);
 
