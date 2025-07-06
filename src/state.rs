@@ -41,7 +41,7 @@ impl State {
 	pub fn request_redraw(&self) {
 		self.window.request_redraw();
 	}
-	pub fn update(&mut self, control_map: &mut ControlMap, delta_time: f32) {
+	pub fn update(&mut self, control_map: &mut ControlMap, _delta_time: f32) {
 		if control_map.zoom_in {
 			self.camera.fov -= 0.1;
 		} else if control_map.zoom_out {
