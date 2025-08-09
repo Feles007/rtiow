@@ -6,27 +6,30 @@ use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::world::World;
 use glm::Vec3;
+use std::ops::Range;
 
 #[derive(Debug)]
 pub struct BvhWorld {
 	materials: Vec<Material>,
 	bounding_volume: BoundingVolume,
+	spheres: Vec<Sphere>,
 }
 impl BvhWorld {
 	pub fn new(world: World) -> Self {
 		let (spheres, materials) = world.decompose();
 		Self {
 			materials,
-			bounding_volume: BoundingVolume::from_spheres(spheres),
+			bounding_volume: BoundingVolume::from_spheres(&spheres, 0..spheres.len()),
+			spheres,
 		}
 	}
 	pub fn split(&mut self) {
-		self.bounding_volume.split();
+		self.bounding_volume.split(&mut self.spheres);
 	}
 }
 impl Hittable for BvhWorld {
 	fn hit(&self, ray: Ray, interval: Interval) -> Option<HitRecord> {
-		self.bounding_volume.hit(ray, interval)
+		self.bounding_volume.hit(ray, interval, &self.spheres)
 	}
 }
 impl MaterialStore for BvhWorld {
@@ -74,7 +77,7 @@ pub struct BoundingVolume {
 #[derive(Debug)]
 pub enum BoundingVolumeInner {
 	Split(Box<[BoundingVolume; 2]>),
-	Container(Vec<Sphere>),
+	Container(Range<usize>),
 }
 enum Axis {
 	X,
@@ -82,11 +85,11 @@ enum Axis {
 	Z,
 }
 impl BoundingVolume {
-	pub fn from_spheres(spheres: Vec<Sphere>) -> Self {
+	pub fn from_spheres(spheres: &[Sphere], sphere_indices: Range<usize>) -> Self {
 		let mut min = Vec3::zeros();
 		let mut max = Vec3::zeros();
 
-		let mut iter = spheres.iter();
+		let mut iter = spheres[sphere_indices.clone()].iter();
 
 		match iter.next() {
 			Some(sphere) => {
@@ -111,19 +114,21 @@ impl BoundingVolume {
 
 		Self {
 			aabb: Aabb { min, max },
-			inner: BoundingVolumeInner::Container(spheres),
+			inner: BoundingVolumeInner::Container(sphere_indices),
 		}
 	}
-	pub fn split(&mut self) {
+	pub fn split(&mut self, spheres: &mut [Sphere]) {
 		let (c0, c1) = {
-			let spheres = match &mut self.inner {
+			let sphere_indices = match &mut self.inner {
 				BoundingVolumeInner::Split(_) => unimplemented!(),
-				BoundingVolumeInner::Container(spheres) => spheres,
+				BoundingVolumeInner::Container(spheres) => spheres.clone(),
 			};
 
-			if spheres.len() < 3 {
+			if sphere_indices.len() < 3 {
 				return;
 			}
+
+			let spheres = &mut spheres[sphere_indices.clone()];
 
 			let axis = {
 				let x_span = self.aabb.min.x.abs() + self.aabb.max.x.abs();
@@ -145,28 +150,34 @@ impl BoundingVolume {
 				Axis::Z => a.center.z.partial_cmp(&b.center.z).unwrap(),
 			});
 
-			let (c0, c1) = spheres.split_at(spheres.len() / 2);
-			(c0.to_owned(), c1.to_owned())
+			let start = sphere_indices.clone().start;
+			let end = sphere_indices.clone().end;
+			let si_half = start + sphere_indices.len() / 2;
+
+			let r0 = start..si_half;
+			let r1 = si_half..end;
+
+			assert_eq!(r0.len() + r1.len(), sphere_indices.len());
+
+			(r0, r1)
 		};
 
-		let mut bvi0 = BoundingVolume::from_spheres(c0);
-		bvi0.split();
-		let mut bvi1 = BoundingVolume::from_spheres(c1);
-		bvi1.split();
+		let mut bvi0 = BoundingVolume::from_spheres(spheres, c0);
+		bvi0.split(spheres);
+		let mut bvi1 = BoundingVolume::from_spheres(spheres, c1);
+		bvi1.split(spheres);
 
 		self.inner = BoundingVolumeInner::Split(Box::new([bvi0, bvi1]));
 	}
-}
-impl Hittable for BoundingVolume {
-	fn hit(&self, ray: Ray, interval: Interval) -> Option<HitRecord> {
+	pub fn hit(&self, ray: Ray, interval: Interval, spheres: &[Sphere]) -> Option<HitRecord> {
 		if !self.aabb.basic_hit(ray) {
 			return None;
 		}
 
 		match &self.inner {
 			BoundingVolumeInner::Split(split) => {
-				let hr0 = split[0].hit(ray, interval);
-				let hr1 = split[1].hit(ray, interval);
+				let hr0 = split[0].hit(ray, interval, spheres);
+				let hr1 = split[1].hit(ray, interval, spheres);
 
 				match (hr0, hr1) {
 					(None, None) => None,
@@ -175,7 +186,7 @@ impl Hittable for BoundingVolume {
 					(Some(hr0), Some(hr1)) => Some(if hr0.t < hr1.t { hr0 } else { hr1 }),
 				}
 			},
-			BoundingVolumeInner::Container(spheres) => spheres.as_slice().hit(ray, interval),
+			BoundingVolumeInner::Container(sphere_indices) => (&spheres[sphere_indices.clone()]).hit(ray, interval),
 		}
 	}
 }
