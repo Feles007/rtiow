@@ -1,3 +1,4 @@
+use crate::hittable::Hittable;
 use crate::interval::Interval;
 use crate::ray::Ray;
 use crate::rng;

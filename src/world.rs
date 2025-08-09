@@ -1,4 +1,5 @@
 use crate::hit_record::HitRecord;
+use crate::hittable::Hittable;
 use crate::interval::Interval;
 use crate::material::{Material, MaterialReference};
 use crate::ray::Ray;
@@ -26,14 +27,14 @@ impl World {
 	pub fn add_sphere(&mut self, sphere: Sphere) {
 		self.spheres.push(sphere);
 	}
-	pub fn hit(&self, ray: Ray, interval: Interval) -> Option<HitRecord> {
+}
+impl Hittable for World {
+	fn hit(&self, ray: Ray, interval: Interval) -> Option<HitRecord> {
 		let mut closest_so_far = interval.max;
 		let mut ret = None;
 
 		for sphere in self.spheres.iter() {
-			if let Some(result) =
-				sphere.hit(ray, Interval::new(interval.min, closest_so_far))
-			{
+			if let Some(result) = sphere.hit(ray, Interval::new(interval.min, closest_so_far)) {
 				closest_so_far = result.t;
 				ret = Some(result);
 			}

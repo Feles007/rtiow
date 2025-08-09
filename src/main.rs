@@ -3,6 +3,7 @@ mod app;
 mod bvh;
 mod camera;
 mod hit_record;
+mod hittable;
 mod interval;
 mod material;
 mod ray;
