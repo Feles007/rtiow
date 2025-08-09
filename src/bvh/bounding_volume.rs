@@ -9,18 +9,13 @@ use std::ops::Range;
 
 #[derive(Debug)]
 pub struct BoundingVolume {
-	aabb: Aabb,
-	inner: BoundingVolumeInner,
+	pub aabb: Aabb,
+	pub inner: BoundingVolumeInner,
 }
 #[derive(Debug)]
 pub enum BoundingVolumeInner {
-	Split(Box<[BoundingVolume; 2]>),
+	Split(usize, usize),
 	Container(Range<usize>),
-}
-enum Axis {
-	X,
-	Y,
-	Z,
 }
 impl BoundingVolume {
 	pub fn from_spheres(spheres: &[Sphere], sphere_indices: Range<usize>) -> Self {
@@ -55,67 +50,15 @@ impl BoundingVolume {
 			inner: BoundingVolumeInner::Container(sphere_indices),
 		}
 	}
-	pub fn split(&mut self, spheres: &mut [Sphere]) {
-		let (c0, c1) = {
-			let sphere_indices = match &mut self.inner {
-				BoundingVolumeInner::Split(_) => unimplemented!(),
-				BoundingVolumeInner::Container(spheres) => spheres.clone(),
-			};
-
-			if sphere_indices.len() < 3 {
-				return;
-			}
-
-			let spheres = &mut spheres[sphere_indices.clone()];
-
-			let axis = {
-				let x_span = self.aabb.min.x.abs() + self.aabb.max.x.abs();
-				let y_span = self.aabb.min.y.abs() + self.aabb.max.y.abs();
-				let z_span = self.aabb.min.z.abs() + self.aabb.max.z.abs();
-
-				if x_span > y_span && x_span > z_span {
-					Axis::X
-				} else if y_span > x_span && y_span > z_span {
-					Axis::Y
-				} else {
-					Axis::Z
-				}
-			};
-
-			spheres.sort_by(|a, b| match axis {
-				Axis::X => a.center.x.partial_cmp(&b.center.x).unwrap(),
-				Axis::Y => a.center.y.partial_cmp(&b.center.y).unwrap(),
-				Axis::Z => a.center.z.partial_cmp(&b.center.z).unwrap(),
-			});
-
-			let start = sphere_indices.clone().start;
-			let end = sphere_indices.clone().end;
-			let si_half = start + sphere_indices.len() / 2;
-
-			let r0 = start..si_half;
-			let r1 = si_half..end;
-
-			assert_eq!(r0.len() + r1.len(), sphere_indices.len());
-
-			(r0, r1)
-		};
-
-		let mut bvi0 = BoundingVolume::from_spheres(spheres, c0);
-		bvi0.split(spheres);
-		let mut bvi1 = BoundingVolume::from_spheres(spheres, c1);
-		bvi1.split(spheres);
-
-		self.inner = BoundingVolumeInner::Split(Box::new([bvi0, bvi1]));
-	}
-	pub fn hit(&self, ray: Ray, interval: Interval, spheres: &[Sphere]) -> Option<HitRecord> {
+	pub fn hit(&self, ray: Ray, interval: Interval, spheres: &[Sphere], nodes: &[BoundingVolume]) -> Option<HitRecord> {
 		if !self.aabb.basic_hit(ray) {
 			return None;
 		}
 
 		match &self.inner {
-			BoundingVolumeInner::Split(split) => {
-				let hr0 = split[0].hit(ray, interval, spheres);
-				let hr1 = split[1].hit(ray, interval, spheres);
+			BoundingVolumeInner::Split(n0, n1) => {
+				let hr0 = nodes[*n0].hit(ray, interval, spheres, nodes);
+				let hr1 = nodes[*n1].hit(ray, interval, spheres, nodes);
 
 				match (hr0, hr1) {
 					(None, None) => None,

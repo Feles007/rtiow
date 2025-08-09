@@ -18,7 +18,7 @@ impl BvhWorld {
 	pub fn new(world: World) -> Self {
 		let (mut spheres, materials) = world.decompose();
 		let mut nodes = vec![BoundingVolume::from_spheres(&spheres, 0..spheres.len())];
-		split::split(&mut nodes, &mut spheres);
+		split::split(&mut nodes, &mut spheres, 0);
 		Self {
 			materials,
 			nodes,
@@ -28,7 +28,7 @@ impl BvhWorld {
 }
 impl Hittable for BvhWorld {
 	fn hit(&self, ray: Ray, interval: Interval) -> Option<HitRecord> {
-		self.nodes[0].hit(ray, interval, &self.spheres)
+		self.nodes[0].hit(ray, interval, &self.spheres, &self.nodes)
 	}
 }
 impl MaterialStore for BvhWorld {
