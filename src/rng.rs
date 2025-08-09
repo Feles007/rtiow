@@ -1,37 +1,13 @@
 use glm::{vec3, Vec3};
-use std::sync::atomic::{AtomicU32, Ordering};
-
-// thread_local! {
-// 	static RNG: RefCell<Xoshiro128Plus> = RefCell::new(Xoshiro128Plus::seed_from_u64(0));
-// }
-// pub fn f32() -> f32 {
-// 	RNG.with_borrow_mut(|rng| rng.random())
-// }
-// thread_local! {
-// 	static RNG_STATE: Cell<u32> = const { Cell::new(0xE9BE815E) };
-// }
-// pub fn f32() -> f32 {
-// 	const SIGN_EXP: u32 = 0x3F800000;
-//
-// 	let mut x = RNG_STATE.get();
-// 	x ^= x << 13;
-// 	x ^= x >> 17;
-// 	x ^= x << 5;
-// 	RNG_STATE.replace(x);
-// 	f32::from_bits((x >> 9) | SIGN_EXP) - 1.0
-// }
+use rand::Rng;
 
 const SIGN_EXP: u32 = 0x3F800000;
 
-static RNG_STATE: AtomicU32 = AtomicU32::new(0xE9BE815E);
-
+pub fn u32() -> u32 {
+	rand::rng().random()
+}
 pub fn f32() -> f32 {
-	let mut x = RNG_STATE.load(Ordering::Relaxed);
-	x ^= x << 13;
-	x ^= x >> 17;
-	x ^= x << 5;
-	RNG_STATE.store(x, Ordering::Relaxed);
-	f32::from_bits((x >> 9) | SIGN_EXP) - 1.0
+	f32::from_bits((u32() >> 9) | SIGN_EXP) - 1.0
 }
 
 pub fn f32_range(min: f32, max: f32) -> f32 {
@@ -49,48 +25,6 @@ pub fn unit_vector() -> Vec3 {
 		let length_squared = p.magnitude_squared();
 		if f32::EPSILON < length_squared && length_squared <= 1.0 {
 			return p / length_squared.sqrt();
-		}
-	}
-}
-pub struct RtRng {
-	state: u32,
-}
-impl RtRng {
-	pub fn new(seed: u32) -> Self {
-		Self { state: seed }
-	}
-	pub fn random_bits(&mut self) -> u32 {
-		let mut x = self.state;
-		x ^= x << 13;
-		x ^= x >> 17;
-		x ^= x << 5;
-		self.state = x;
-		x
-	}
-	pub fn f32(&mut self) -> f32 {
-		let bits = self.random_bits();
-		f32::from_bits((bits >> 9) | SIGN_EXP) - 1.0
-	}
-	pub fn f32_range(&mut self, min: f32, max: f32) -> f32 {
-		min + (max - min) * self.f32()
-	}
-	pub fn vector_range(&mut self, min: f32, max: f32) -> Vec3 {
-		vec3(
-			self.f32_range(min, max),
-			self.f32_range(min, max),
-			self.f32_range(min, max),
-		)
-	}
-	pub fn vector(&mut self) -> Vec3 {
-		vec3(self.f32(), self.f32(), self.f32())
-	}
-	pub fn unit_vector(&mut self) -> Vec3 {
-		loop {
-			let p = self.vector_range(-1.0, 1.0);
-			let length_squared = p.magnitude_squared();
-			if f32::EPSILON < length_squared && length_squared <= 1.0 {
-				return p / length_squared.sqrt();
-			}
 		}
 	}
 }
