@@ -40,52 +40,23 @@ pub struct Aabb {
 	max: Vec3,
 }
 impl Aabb {
-	// https://alelievr.github.io/Modern-Rendering-Introduction/AABBIntersection/
+	// https://tavianator.com/2015/ray_box_nan.html
 	pub fn basic_hit(&self, ray: Ray, interval: Interval) -> bool {
-		let p0 = ray.at(interval.min);
-		let p1 = ray.at(interval.max);
+		let mut t1 = (self.min[0] - ray.origin()[0]) / ray.direction()[0];
+		let mut t2 = (self.max[0] - ray.origin()[0]) / ray.direction()[0];
 
-		let c = (self.min + self.max) * 0.5; // Box center
-		let e = self.max - c; // Box half-extent
+		let mut tmin = t1.min(t2);
+		let mut tmax = t1.max(t2);
 
-		// Segment midpoint and halflength vector
-		let mut m = (p0 + p1) * 0.5; // Segment midpoint
-		let d = p1 - m; // Segment halflength vector
-		m = m - c; // Translate box and segment to the origin
+		for i in 1..3 {
+			t1 = (self.min[i] - ray.origin()[i]) / ray.direction()[i];
+			t2 = (self.max[i] - ray.origin()[i]) / ray.direction()[i];
 
-		// Test world coordinate axes as separating axes
-		let mut adx = d.x.abs();
-		if m.x.abs() > e.x + adx {
-			return false;
-		};
-		let mut ady = d.y.abs();
-		if m.y.abs() > e.y + ady {
-			return false;
-		};
-		let mut adz = d.z.abs();
-		if m.z.abs() > e.z + adz {
-			return false;
-		};
+			tmin = tmin.max(t1.min(t2));
+			tmax = tmax.min(t1.max(t2));
+		}
 
-		// Add a small epsilon to counteract potential arithmetic errors when the segment is
-		// near-parallel to one of the coordinate axes
-		adx += f32::EPSILON;
-		ady += f32::EPSILON;
-		adz += f32::EPSILON;
-
-		// Test cross products of segment direction vector with coordinate axes
-		if (m.y * d.z - m.z * d.y).abs() > e.y * adz + e.z * ady {
-			return false;
-		}; // Cross with X-axis
-		if (m.z * d.x - m.x * d.z).abs() > e.x * adz + e.z * adx {
-			return false;
-		}; // Cross with Y-axis
-		if (m.x * d.y - m.y * d.x).abs() > e.x * ady + e.y * adx {
-			return false;
-		}; // Cross with Z-axis
-
-		// No separating axis found; segment overlaps the AABB
-		true
+		tmax > tmin.max(0.0)
 	}
 }
 #[derive(Debug)]
