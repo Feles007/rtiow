@@ -42,19 +42,26 @@ pub struct Aabb {
 impl Aabb {
 	// https://tavianator.com/2015/ray_box_nan.html
 	pub fn basic_hit(&self, ray: Ray, interval: Interval) -> bool {
-		let mut t1 = (self.min[0] - ray.origin()[0]) / ray.direction()[0];
-		let mut t2 = (self.max[0] - ray.origin()[0]) / ray.direction()[0];
+		let mut tmin;
+		let mut tmax;
 
-		let mut tmin = t1.min(t2);
-		let mut tmax = t1.max(t2);
+		let t1 = (self.min.x - ray.origin().x) / ray.direction().x;
+		let t2 = (self.max.x - ray.origin().x) / ray.direction().x;
 
-		for i in 1..3 {
-			t1 = (self.min[i] - ray.origin()[i]) / ray.direction()[i];
-			t2 = (self.max[i] - ray.origin()[i]) / ray.direction()[i];
+		tmin = t1.min(t2);
+		tmax = t1.max(t2);
 
-			tmin = tmin.max(t1.min(t2));
-			tmax = tmax.min(t1.max(t2));
-		}
+		let t1 = (self.min.y - ray.origin().y) / ray.direction().y;
+		let t2 = (self.max.y - ray.origin().y) / ray.direction().y;
+
+		tmin = tmin.max(t1.min(t2));
+		tmax = tmax.min(t1.max(t2));
+
+		let t1 = (self.min.z - ray.origin().z) / ray.direction().z;
+		let t2 = (self.max.z - ray.origin().z) / ray.direction().z;
+
+		tmin = tmin.max(t1.min(t2));
+		tmax = tmax.min(t1.max(t2));
 
 		tmax > tmin.max(0.0)
 	}
