@@ -14,6 +14,7 @@ mod utils;
 mod world;
 
 use crate::app::App;
+use crate::bvh::BvhWorld;
 use crate::material::Material;
 use crate::sphere::Sphere;
 use crate::world::World;
@@ -21,6 +22,11 @@ use glm::vec3;
 use winit::event_loop::{ControlFlow, EventLoop};
 
 fn main() {
+	let world = make_world();
+	let mut world = BvhWorld::new(world);
+	world.split();
+	//dbg!(world);
+	return;
 	let event_loop = EventLoop::new().unwrap();
 	event_loop.set_control_flow(ControlFlow::Poll);
 	let mut app = App::new();
