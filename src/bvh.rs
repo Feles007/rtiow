@@ -41,7 +41,7 @@ pub struct Aabb {
 }
 impl Aabb {
 	// https://tavianator.com/2015/ray_box_nan.html
-	pub fn basic_hit(&self, ray: Ray, interval: Interval) -> bool {
+	pub fn basic_hit(&self, ray: Ray) -> bool {
 		let mut tmin;
 		let mut tmax;
 
@@ -159,7 +159,7 @@ impl BoundingVolume {
 }
 impl Hittable for BoundingVolume {
 	fn hit(&self, ray: Ray, interval: Interval) -> Option<HitRecord> {
-		if !self.aabb.basic_hit(ray, interval) {
+		if !self.aabb.basic_hit(ray) {
 			return None;
 		}
 
