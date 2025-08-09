@@ -28,9 +28,9 @@ impl State {
 		let yaw = FRAC_PI_2;
 
 		let camera = Camera {
-			samples_per_pixel: 1,
+			samples_per_pixel: 10,
 			max_depth: 10,
-			fov: 20.0,
+			fov: 75.0,
 			location: vec3(13.0, 2.0, 3.0),
 			pitch,
 			yaw,
@@ -69,7 +69,7 @@ impl State {
 	}
 	pub fn update(&mut self, control_map: &mut ControlMap, delta_time: f32) {
 		let zoom_speed = 10.0;
-		let sensitivity = 0.1;
+		let sensitivity = 0.01;
 		let movement_speed = 5.0;
 
 		if control_map.zoom_in {
@@ -78,8 +78,8 @@ impl State {
 			self.camera.fov += zoom_speed * delta_time;
 		}
 
-		self.camera.pitch += control_map.move_pitch * sensitivity * delta_time;
-		self.camera.yaw -= control_map.move_yaw * sensitivity * delta_time;
+		self.camera.pitch += control_map.move_pitch * sensitivity;
+		self.camera.yaw -= control_map.move_yaw * sensitivity;
 		control_map.move_pitch = 0.0;
 		control_map.move_yaw = 0.0;
 

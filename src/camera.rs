@@ -57,7 +57,7 @@ impl Camera {
 			let mut color = Color::zeros();
 			for _ in 0..self.samples_per_pixel {
 				let ray = get_ray(x, y, camera_center, pixel00_loc, pixel_delta_u, pixel_delta_v);
-				color += ray_color_iterative(ray, world, self.max_depth);
+				color += ray_color_simple(ray, world, self.max_depth);
 			}
 			color /= self.samples_per_pixel as f32;
 

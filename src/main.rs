@@ -1,5 +1,6 @@
 extern crate nalgebra_glm as glm;
 mod app;
+mod bvh;
 mod camera;
 mod hit_record;
 mod interval;
@@ -33,36 +34,36 @@ fn make_world() -> World {
 	});
 	world.add_sphere(Sphere::new(vec3(0.0, -1000.0, 0.0), 1000.0, ground_material));
 
-	// for a in -11..11 {
-	// 	for b in -11..11 {
-	// 		let a = a as f32;
-	// 		let b = b as f32;
-	//
-	// 		let choose_mat = rng::f32();
-	// 		let center = vec3(a + 0.9 * rng::f32(), 0.2, b + 0.9 * rng::f32());
-	//
-	// 		if (center - vec3(4.0, 0.2, 0.0)).magnitude() > 0.9 {
-	// 			let sphere_material;
-	//
-	// 			if choose_mat < 0.8 {
-	// 				// diffuse
-	// 				let albedo = rng::vector().component_mul(&rng::vector());
-	// 				sphere_material = world.add_material(Material::Lambertian { albedo });
-	// 				world.add_sphere(Sphere::new(center, 0.2, sphere_material));
-	// 			} else if choose_mat < 0.95 {
-	// 				// metal
-	// 				let albedo = rng::vector().component_mul(&rng::vector());
-	// 				let fuzz = rng::f32_range(0.0, 0.5);
-	// 				sphere_material = world.add_material(Material::Metal { albedo, fuzz });
-	// 				world.add_sphere(Sphere::new(center, 0.2, sphere_material));
-	// 			} else {
-	// 				// glass
-	// 				sphere_material = world.add_material(Material::Dielectric { refraction_index: 1.5 });
-	// 				world.add_sphere(Sphere::new(center, 0.2, sphere_material));
-	// 			}
-	// 		}
-	// 	}
-	// }
+	for a in -11..11 {
+		for b in -11..11 {
+			let a = a as f32;
+			let b = b as f32;
+
+			let choose_mat = rng::f32();
+			let center = vec3(a + 0.9 * rng::f32(), 0.2, b + 0.9 * rng::f32());
+
+			if (center - vec3(4.0, 0.2, 0.0)).magnitude() > 0.9 {
+				let sphere_material;
+
+				if choose_mat < 0.8 {
+					// diffuse
+					let albedo = rng::vector().component_mul(&rng::vector());
+					sphere_material = world.add_material(Material::Lambertian { albedo });
+					world.add_sphere(Sphere::new(center, 0.2, sphere_material));
+				} else if choose_mat < 0.95 {
+					// metal
+					let albedo = rng::vector().component_mul(&rng::vector());
+					let fuzz = rng::f32_range(0.0, 0.5);
+					sphere_material = world.add_material(Material::Metal { albedo, fuzz });
+					world.add_sphere(Sphere::new(center, 0.2, sphere_material));
+				} else {
+					// glass
+					sphere_material = world.add_material(Material::Dielectric { refraction_index: 1.5 });
+					world.add_sphere(Sphere::new(center, 0.2, sphere_material));
+				}
+			}
+		}
+	}
 
 	let material1 = world.add_material(Material::Dielectric { refraction_index: 1.5 });
 	world.add_sphere(Sphere::new(vec3(0.0, 1.0, 0.0), 1.0, material1));
