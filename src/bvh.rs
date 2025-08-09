@@ -16,15 +16,14 @@ pub struct BvhWorld {
 }
 impl BvhWorld {
 	pub fn new(world: World) -> Self {
-		let (spheres, materials) = world.decompose();
+		let (mut spheres, materials) = world.decompose();
+		let mut bounding_volume = BoundingVolume::from_spheres(&spheres, 0..spheres.len());
+		bounding_volume.split(&mut spheres);
 		Self {
 			materials,
-			bounding_volume: BoundingVolume::from_spheres(&spheres, 0..spheres.len()),
+			bounding_volume,
 			spheres,
 		}
-	}
-	pub fn split(&mut self) {
-		self.bounding_volume.split(&mut self.spheres);
 	}
 }
 impl Hittable for BvhWorld {

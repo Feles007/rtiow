@@ -28,9 +28,7 @@ fn main() {
 	event_loop.run_app(&mut app).unwrap();
 }
 fn make_bvh_world() -> BvhWorld {
-	let mut world = BvhWorld::new(make_world());
-	world.split();
-	world
+	BvhWorld::new(make_world())
 }
 
 fn make_world() -> World {
