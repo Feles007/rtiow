@@ -18,7 +18,7 @@ pub struct State {
 }
 impl State {
 	pub fn new(world: BvhWorld, window: Arc<Window>) -> Self {
-		rayon::ThreadPoolBuilder::new().num_threads(4).build_global().unwrap();
+		rayon::ThreadPoolBuilder::new().num_threads(16).build_global().unwrap();
 
 		let size = window.inner_size();
 		let surface_texture = SurfaceTexture::new(size.width, size.height, window.clone());
