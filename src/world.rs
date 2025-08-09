@@ -1,5 +1,5 @@
 use crate::hit_record::HitRecord;
-use crate::hittable::Hittable;
+use crate::hittable::{Hittable, MaterialStore};
 use crate::interval::Interval;
 use crate::material::{Material, MaterialReference};
 use crate::ray::Ray;
@@ -21,11 +21,11 @@ impl World {
 		self.materials.push(material);
 		id
 	}
-	pub fn get_material(&self, material: MaterialReference) -> &Material {
-		&self.materials[usize::from(material.id())]
-	}
 	pub fn add_sphere(&mut self, sphere: Sphere) {
 		self.spheres.push(sphere);
+	}
+	pub fn decompose(self) -> (Vec<Sphere>, Vec<Material>) {
+		(self.spheres, self.materials)
 	}
 }
 impl Hittable for World {
@@ -41,5 +41,10 @@ impl Hittable for World {
 		}
 
 		ret
+	}
+}
+impl MaterialStore for World {
+	fn get_material(&self, material: MaterialReference) -> &Material {
+		&self.materials[usize::from(material.id())]
 	}
 }

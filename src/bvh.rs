@@ -1,8 +1,12 @@
-use crate::sphere::Sphere;
+use crate::material::Material;
+use crate::world::World;
 
-pub struct Bvh {}
-impl Bvh {
-	pub fn new(spheres: &[Sphere]) -> Self {
-		Self {}
+pub struct BvhWorld {
+	materials: Vec<Material>,
+}
+impl BvhWorld {
+	pub fn new(world: World) -> Self {
+		let (spheres, materials) = world.decompose();
+		Self { materials }
 	}
 }

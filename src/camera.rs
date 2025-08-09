@@ -1,10 +1,9 @@
-use crate::hittable::Hittable;
+use crate::hittable::{Hittable, MaterialStore};
 use crate::interval::Interval;
 use crate::ray::Ray;
 use crate::rng;
 use crate::state::make_look;
 use crate::utils::{linear_to_gamma, Color};
-use crate::world::World;
 use bytemuck::{Pod, Zeroable};
 use glm::{vec3, Vec3};
 use rayon::prelude::*;
@@ -26,7 +25,13 @@ pub struct Camera {
 	pub yaw: f32,
 }
 impl Camera {
-	pub fn render(&self, world: &World, buffer: &mut [Pixel], width: u32, height: u32) {
+	pub fn render(
+		&self,
+		world: &(impl Hittable + MaterialStore + Sync),
+		buffer: &mut [Pixel],
+		width: u32,
+		height: u32,
+	) {
 		let camera_center = self.location;
 		let direction = make_look(self.pitch, self.yaw);
 
@@ -87,7 +92,7 @@ fn get_ray(x: u32, y: u32, camera_center: Vec3, pixel00_loc: Vec3, pixel_delta_u
 	Ray::new(ray_origin, ray_direction)
 }
 #[allow(unused)]
-fn ray_color(ray: Ray, world: &World, depth: u32) -> Color {
+fn ray_color(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u32) -> Color {
 	if depth == 0 {
 		return Color::zeros();
 	}
@@ -103,7 +108,7 @@ fn ray_color(ray: Ray, world: &World, depth: u32) -> Color {
 	background_color(ray)
 }
 #[allow(unused)]
-fn ray_color_iterative(ray: Ray, world: &World, depth: u32) -> Color {
+fn ray_color_iterative(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u32) -> Color {
 	let mut colors = Vec::new();
 
 	let mut current_ray = ray;
@@ -135,7 +140,7 @@ fn ray_color_iterative(ray: Ray, world: &World, depth: u32) -> Color {
 	color_accumulator
 }
 #[allow(unused)]
-fn ray_color_simple(ray: Ray, world: &World, depth: u32) -> Color {
+fn ray_color_simple(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u32) -> Color {
 	let mut color = Vec3::zeros();
 	let mut first_color = true;
 
