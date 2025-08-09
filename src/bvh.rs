@@ -134,11 +134,8 @@ impl BoundingVolume {
 					Axis::X
 				} else if y_span > x_span && y_span > z_span {
 					Axis::Y
-				} else if z_span > x_span && z_span > y_span {
-					Axis::Z
 				} else {
-					dbg!(x_span, y_span, z_span);
-					todo!()
+					Axis::Z
 				}
 			};
 
