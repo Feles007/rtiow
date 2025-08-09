@@ -1,4 +1,4 @@
-use crate::make_world;
+use crate::make_bvh_world;
 use crate::state::State;
 use std::sync::Arc;
 use std::time::Instant;
@@ -38,7 +38,7 @@ impl ApplicationHandler for App {
 	fn resumed(&mut self, event_loop: &ActiveEventLoop) {
 		let window = Arc::new(event_loop.create_window(Window::default_attributes()).unwrap());
 
-		let state = State::new(make_world(), window.clone());
+		let state = State::new(make_bvh_world(), window.clone());
 
 		window.request_redraw();
 		*self = Self::Running {
@@ -97,6 +97,10 @@ impl ApplicationHandler for App {
 						_ => return,
 					}
 				};
+
+				if code == KeyCode::KeyQ {
+					event_loop.exit();
+				}
 
 				*match code {
 					KeyCode::KeyZ => &mut control_map.zoom_in,

@@ -22,15 +22,15 @@ use glm::vec3;
 use winit::event_loop::{ControlFlow, EventLoop};
 
 fn main() {
-	let world = make_world();
-	let mut world = BvhWorld::new(world);
-	world.split();
-	//dbg!(world);
-	return;
 	let event_loop = EventLoop::new().unwrap();
 	event_loop.set_control_flow(ControlFlow::Poll);
 	let mut app = App::new();
 	event_loop.run_app(&mut app).unwrap();
+}
+fn make_bvh_world() -> BvhWorld {
+	let mut world = BvhWorld::new(make_world());
+	world.split();
+	world
 }
 
 fn make_world() -> World {

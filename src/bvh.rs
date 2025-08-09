@@ -1,5 +1,7 @@
+use crate::hit_record::HitRecord;
+use crate::hittable::{Hittable, MaterialStore};
 use crate::interval::Interval;
-use crate::material::Material;
+use crate::material::{Material, MaterialReference};
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::world::World;
@@ -20,6 +22,16 @@ impl BvhWorld {
 	}
 	pub fn split(&mut self) {
 		self.bounding_volume.split();
+	}
+}
+impl Hittable for BvhWorld {
+	fn hit(&self, ray: Ray, interval: Interval) -> Option<HitRecord> {
+		self.bounding_volume.hit(ray, interval)
+	}
+}
+impl MaterialStore for BvhWorld {
+	fn get_material(&self, material: MaterialReference) -> &Material {
+		&self.materials[usize::from(material.id())]
 	}
 }
 #[derive(Debug)]
@@ -168,5 +180,27 @@ impl BoundingVolume {
 		bvi1.split();
 
 		self.inner = BoundingVolumeInner::Split(Box::new([bvi0, bvi1]));
+	}
+}
+impl Hittable for BoundingVolume {
+	fn hit(&self, ray: Ray, interval: Interval) -> Option<HitRecord> {
+		if !self.aabb.basic_hit(ray, interval) {
+			return None;
+		}
+
+		match &self.inner {
+			BoundingVolumeInner::Split(split) => {
+				let hr0 = split[0].hit(ray, interval);
+				let hr1 = split[1].hit(ray, interval);
+
+				match (hr0, hr1) {
+					(None, None) => None,
+					(Some(hr), None) => Some(hr),
+					(None, Some(hr)) => Some(hr),
+					(Some(hr0), Some(hr1)) => Some(if hr0.t < hr1.t { hr0 } else { hr1 }),
+				}
+			},
+			BoundingVolumeInner::Container(spheres) => spheres.as_slice().hit(ray, interval),
+		}
 	}
 }

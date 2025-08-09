@@ -1,6 +1,6 @@
 use crate::app::ControlMap;
+use crate::bvh::BvhWorld;
 use crate::camera::Camera;
-use crate::world::World;
 use glm::{vec3, Vec3};
 use pixels::{Pixels, SurfaceTexture};
 use std::f32::consts::FRAC_PI_2;
@@ -9,7 +9,7 @@ use winit::dpi::PhysicalSize;
 use winit::window::{CursorGrabMode, Window};
 
 pub struct State {
-	world: World,
+	world: BvhWorld,
 	camera: Camera,
 	window: Arc<Window>,
 	pixels: Pixels<'static>,
@@ -17,7 +17,7 @@ pub struct State {
 	mouse_focused: bool,
 }
 impl State {
-	pub fn new(world: World, window: Arc<Window>) -> Self {
+	pub fn new(world: BvhWorld, window: Arc<Window>) -> Self {
 		rayon::ThreadPoolBuilder::new().num_threads(4).build_global().unwrap();
 
 		let size = window.inner_size();

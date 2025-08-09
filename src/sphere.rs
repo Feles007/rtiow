@@ -49,3 +49,18 @@ impl Hittable for Sphere {
 		Some(HitRecord::new(ray, normal, point, root, self.material))
 	}
 }
+impl Hittable for &[Sphere] {
+	fn hit(&self, ray: Ray, interval: Interval) -> Option<HitRecord> {
+		let mut closest_so_far = interval.max;
+		let mut ret = None;
+
+		for sphere in *self {
+			if let Some(result) = sphere.hit(ray, Interval::new(interval.min, closest_so_far)) {
+				closest_so_far = result.t;
+				ret = Some(result);
+			}
+		}
+
+		ret
+	}
+}
