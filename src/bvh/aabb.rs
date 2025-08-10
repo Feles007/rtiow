@@ -8,7 +8,6 @@ pub struct Aabb {
 }
 impl Aabb {
 	// https://tavianator.com/2015/ray_box_nan.html
-	#[inline(never)]
 	pub fn basic_hit(&self, ray: Ray) -> bool {
 		let inv = ray.direction().reciprocal();
 
