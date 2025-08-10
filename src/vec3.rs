@@ -52,12 +52,17 @@ impl Vec3 {
 	pub fn dot(self, rhs: Self) -> f32 {
 		self.x() * rhs.x() + self.y() * rhs.y() + self.z() * rhs.z()
 	}
+	// https://geometrian.com/resources/cross_product/
 	pub fn cross(self, rhs: Self) -> Self {
-		Self::new(
-			self.y() * rhs.z() - self.z() * rhs.y(),
-			self.z() * rhs.x() - self.x() * rhs.z(),
-			self.x() * rhs.y() - self.y() * rhs.x(),
-		)
+		let inner = unsafe {
+			let tmp0 = _mm_shuffle_ps::<201>(self.inner, self.inner);
+			let tmp1 = _mm_shuffle_ps::<210>(rhs.inner, rhs.inner);
+			let tmp2 = _mm_mul_ps(tmp0, rhs.inner);
+			let tmp3 = _mm_mul_ps(tmp0, tmp1);
+			let tmp4 = _mm_shuffle_ps::<201>(tmp2, tmp2);
+			_mm_sub_ps(tmp3, tmp4)
+		};
+		Self { inner }
 	}
 	#[inline]
 	pub fn min(self, rhs: Self) -> Self {
