@@ -1,4 +1,4 @@
-use std::arch::x86_64::{__m128, _mm_extract_ps, _mm_max_ps, _mm_min_ps};
+use std::arch::x86_64::{__m128, _mm_extract_ps, _mm_max_ps, _mm_min_ps, _mm_movehl_ps, _mm_rcp_ps, _mm_shuffle_ps};
 use std::mem::transmute;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Neg, Sub, SubAssign};
 
@@ -65,6 +65,30 @@ impl Vec3 {
 	pub fn max(self, rhs: Self) -> Self {
 		let inner = unsafe { _mm_max_ps(self.inner, rhs.inner) };
 		Self { inner }
+	}
+	pub fn reciprocal(self) -> Self {
+		let inner = unsafe { _mm_rcp_ps(self.inner) };
+		Self { inner }
+	}
+	pub fn horizontal_max(self) -> f32 {
+		unsafe {
+			let v1 = self.inner;
+			let v2 = _mm_shuffle_ps::<85>(v1, v1);
+			let max1 = _mm_max_ps(v1, v2);
+			let v3 = _mm_movehl_ps(v1, v1);
+			let max2 = _mm_max_ps(max1, v3);
+			f32::from_bits(_mm_extract_ps::<0>(max2) as u32)
+		}
+	}
+	pub fn horizontal_min(self) -> f32 {
+		unsafe {
+			let v1 = self.inner;
+			let v2 = _mm_shuffle_ps::<85>(v1, v1);
+			let max1 = _mm_min_ps(v1, v2);
+			let v3 = _mm_movehl_ps(v1, v1);
+			let max2 = _mm_min_ps(max1, v3);
+			f32::from_bits(_mm_extract_ps::<0>(max2) as u32)
+		}
 	}
 }
 impl Neg for Vec3 {

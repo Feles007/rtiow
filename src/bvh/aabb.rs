@@ -9,30 +9,18 @@ pub struct Aabb {
 impl Aabb {
 	// https://tavianator.com/2015/ray_box_nan.html
 	pub fn basic_hit(&self, ray: Ray) -> bool {
-		let d = ray.direction();
-		let inv = Vec3::new(1. / d.x(), 1. / d.y(), 1. / d.z());
+		let inv = ray.direction().reciprocal();
 
-		let mut tmin;
-		let mut tmax;
+		let t1 = (self.min - ray.origin()) * inv;
+		let t2 = (self.max - ray.origin()) * inv;
 
-		let t1 = (self.min.x() - ray.origin().x()) * inv.x();
-		let t2 = (self.max.x() - ray.origin().x()) * inv.x();
+		let mut tmin = t1.min(t2).horizontal_max();
+		let tmax = t1.max(t2).horizontal_min();
 
-		tmin = t1.min(t2);
-		tmax = t1.max(t2);
+		if tmin < 0.0 {
+			tmin = 0.0;
+		}
 
-		let t1 = (self.min.y() - ray.origin().y()) * inv.y();
-		let t2 = (self.max.y() - ray.origin().y()) * inv.y();
-
-		tmin = tmin.max(t1.min(t2));
-		tmax = tmax.min(t1.max(t2));
-
-		let t1 = (self.min.z() - ray.origin().z()) * inv.z();
-		let t2 = (self.max.z() - ray.origin().z()) * inv.z();
-
-		tmin = tmin.max(t1.min(t2));
-		tmax = tmax.min(t1.max(t2));
-
-		tmax > tmin.max(0.0)
+		tmax > tmin
 	}
 }
