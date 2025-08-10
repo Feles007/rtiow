@@ -56,6 +56,12 @@ impl Vec3 {
 			self.x() * rhs.y() - self.y() * rhs.x(),
 		)
 	}
+	pub fn min(self, rhs: Self) -> Self {
+		Self::new(self.x().min(rhs.x()), self.y().min(rhs.y()), self.z().min(rhs.z()))
+	}
+	pub fn max(self, rhs: Self) -> Self {
+		Self::new(self.x().max(rhs.x()), self.y().max(rhs.y()), self.z().max(rhs.z()))
+	}
 }
 impl Neg for Vec3 {
 	type Output = Self;

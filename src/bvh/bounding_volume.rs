@@ -30,17 +30,8 @@ impl BoundingVolume {
 					let limit_min = sphere.center - Vec3::splat(sphere.radius);
 					let limit_max = sphere.center + Vec3::splat(sphere.radius);
 
-					min = Vec3::new(
-						min.x().min(limit_min.x()),
-						min.y().min(limit_min.y()),
-						min.z().min(limit_min.z()),
-					);
-
-					max = Vec3::new(
-						max.x().max(limit_max.x()),
-						max.y().max(limit_max.y()),
-						max.z().max(limit_max.z()),
-					);
+					min = min.min(limit_min);
+					max = max.max(limit_max);
 				}
 			},
 			None => {},
