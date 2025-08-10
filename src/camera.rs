@@ -92,55 +92,7 @@ fn get_ray(x: u32, y: u32, camera_center: Vec3, pixel00_loc: Vec3, pixel_delta_u
 	let ray_direction = pixel_sample - camera_center;
 	Ray::new(ray_origin, ray_direction)
 }
-#[allow(unused)]
-fn ray_color(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u32) -> Color {
-	if depth == 0 {
-		return Color::ZERO;
-	}
-	if let Some(hit_record) = world.hit(ray, Interval::new(0.001, f32::INFINITY)) {
-		let mat = world.get_material(hit_record.material);
-		return if let Some((scattered, attenuation)) = mat.scatter(ray, hit_record) {
-			attenuation * ray_color(scattered, world, depth - 1)
-		} else {
-			Color::ZERO
-		};
-	}
-
-	background_color(ray)
-}
-#[allow(unused)]
-fn ray_color_iterative(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u32) -> Color {
-	let mut colors = Vec::new();
-
-	let mut current_ray = ray;
-	for _ in 0..depth {
-		if let Some(hit_record) = world.hit(current_ray, Interval::new(0.001, f32::INFINITY)) {
-			let mat = world.get_material(hit_record.material);
-			let (hit_color, next_ray) = if let Some((scattered, attenuation)) = mat.scatter(current_ray, hit_record) {
-				(attenuation, Some(scattered))
-			} else {
-				(Color::new(0.0, 0.0, 0.0), None)
-			};
-			colors.push(hit_color);
-			if let Some(next_ray) = next_ray {
-				current_ray = next_ray;
-			} else {
-				break;
-			}
-		} else {
-			break;
-		};
-	}
-
-	let mut color_accumulator = background_color(current_ray);
-
-	while let Some(color) = colors.pop() {
-		color_accumulator = color_accumulator * color;
-	}
-
-	color_accumulator
-}
-#[allow(unused)]
+#[inline(never)]
 fn ray_color_simple(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u32) -> Color {
 	let mut color = Vec3::ZERO;
 	let mut first_color = true;
