@@ -9,16 +9,16 @@ enum Axis {
 pub fn split(nodes: &mut Vec<BoundingVolume>, spheres: &mut [Sphere], index: usize) {
 	let (c0, c1) = {
 		let bv = &mut nodes[index];
-		let sphere_indices = match &mut bv.inner {
+		let range = match &mut bv.inner {
 			BoundingVolumeInner::Split { .. } => unimplemented!(),
-			BoundingVolumeInner::Container { sphere_indices } => sphere_indices.clone(),
+			BoundingVolumeInner::Container { sphere_indices: range } => *range,
 		};
 
-		if sphere_indices.len() < 3 {
+		if range.length() < 3 {
 			return;
 		}
 
-		let spheres = &mut spheres[sphere_indices.clone()];
+		let spheres = &mut spheres[range.indices()];
 
 		let axis = {
 			let x_span = bv.aabb.min.x.abs() + bv.aabb.max.x.abs();
@@ -40,16 +40,7 @@ pub fn split(nodes: &mut Vec<BoundingVolume>, spheres: &mut [Sphere], index: usi
 			Axis::Z => a.center.z.partial_cmp(&b.center.z).unwrap(),
 		});
 
-		let start = sphere_indices.clone().start;
-		let end = sphere_indices.clone().end;
-		let si_half = start + sphere_indices.len() / 2;
-
-		let r0 = start..si_half;
-		let r1 = si_half..end;
-
-		assert_eq!(r0.len() + r1.len(), sphere_indices.len());
-
-		(r0, r1)
+		range.split()
 	};
 
 	let n0_index = nodes.len();

@@ -1,4 +1,5 @@
 use crate::bvh::bounding_volume::{BoundingVolume, BoundingVolumeInner};
+use crate::bvh::object_range::ObjectRange;
 use crate::bvh::split;
 use crate::hit_record::HitRecord;
 use crate::hittable::{Hittable, MaterialStore};
@@ -17,7 +18,10 @@ pub struct BvhWorld {
 impl BvhWorld {
 	pub fn new(world: World) -> Self {
 		let (mut spheres, materials) = world.decompose();
-		let mut nodes = vec![BoundingVolume::from_spheres(&spheres, 0..spheres.len())];
+		let mut nodes = vec![BoundingVolume::from_spheres(
+			&spheres,
+			ObjectRange::new(0, spheres.len()),
+		)];
 		split::split(&mut nodes, &mut spheres, 0);
 		split::skip_pass(&mut nodes, 0, None);
 		Self {
@@ -41,8 +45,8 @@ impl Hittable for BvhWorld {
 			let current_node = &self.nodes[current_index];
 			if current_node.aabb.basic_hit(ray) {
 				match &current_node.inner {
-					BoundingVolumeInner::Container { sphere_indices } => {
-						let result = (&self.spheres[sphere_indices.clone()]).hit(ray, interval);
+					BoundingVolumeInner::Container { sphere_indices: range } => {
+						let result = (&self.spheres[range.indices()]).hit(ray, interval);
 						match result {
 							Some(result) if hit_record.is_none() || (hit_record.as_ref().unwrap().t > result.t) => {
 								hit_record = Some(result);

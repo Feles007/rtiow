@@ -1,7 +1,7 @@
 use crate::bvh::aabb::Aabb;
+use crate::bvh::object_range::ObjectRange;
 use crate::sphere::Sphere;
 use glm::Vec3;
-use std::ops::Range;
 
 #[derive(Debug)]
 pub struct BoundingVolume {
@@ -12,14 +12,14 @@ pub struct BoundingVolume {
 #[derive(Debug)]
 pub enum BoundingVolumeInner {
 	Split { left: usize, right: usize },
-	Container { sphere_indices: Range<usize> },
+	Container { sphere_indices: ObjectRange },
 }
 impl BoundingVolume {
-	pub fn from_spheres(spheres: &[Sphere], sphere_indices: Range<usize>) -> Self {
+	pub fn from_spheres(spheres: &[Sphere], range: ObjectRange) -> Self {
 		let mut min = Vec3::zeros();
 		let mut max = Vec3::zeros();
 
-		let mut iter = spheres[sphere_indices.clone()].iter();
+		let mut iter = spheres[range.indices()].iter();
 
 		match iter.next() {
 			Some(sphere) => {
@@ -45,7 +45,7 @@ impl BoundingVolume {
 		Self {
 			aabb: Aabb { min, max },
 			skip: None,
-			inner: BoundingVolumeInner::Container { sphere_indices },
+			inner: BoundingVolumeInner::Container { sphere_indices: range },
 		}
 	}
 }
