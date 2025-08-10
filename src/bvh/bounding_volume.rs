@@ -1,8 +1,4 @@
 use crate::bvh::aabb::Aabb;
-use crate::hit_record::HitRecord;
-use crate::hittable::Hittable;
-use crate::interval::Interval;
-use crate::ray::Ray;
 use crate::sphere::Sphere;
 use glm::Vec3;
 use std::ops::Range;
@@ -10,12 +6,13 @@ use std::ops::Range;
 #[derive(Debug)]
 pub struct BoundingVolume {
 	pub aabb: Aabb,
+	pub skip: Option<usize>,
 	pub inner: BoundingVolumeInner,
 }
 #[derive(Debug)]
 pub enum BoundingVolumeInner {
-	Split(usize, usize),
-	Container(Range<usize>),
+	Split { left: usize, right: usize },
+	Container { sphere_indices: Range<usize> },
 }
 impl BoundingVolume {
 	pub fn from_spheres(spheres: &[Sphere], sphere_indices: Range<usize>) -> Self {
@@ -47,27 +44,8 @@ impl BoundingVolume {
 
 		Self {
 			aabb: Aabb { min, max },
-			inner: BoundingVolumeInner::Container(sphere_indices),
-		}
-	}
-	pub fn hit(&self, ray: Ray, interval: Interval, spheres: &[Sphere], nodes: &[BoundingVolume]) -> Option<HitRecord> {
-		if !self.aabb.basic_hit(ray) {
-			return None;
-		}
-
-		match &self.inner {
-			BoundingVolumeInner::Split(n0, n1) => {
-				let hr0 = nodes[*n0].hit(ray, interval, spheres, nodes);
-				let hr1 = nodes[*n1].hit(ray, interval, spheres, nodes);
-
-				match (hr0, hr1) {
-					(None, None) => None,
-					(Some(hr), None) => Some(hr),
-					(None, Some(hr)) => Some(hr),
-					(Some(hr0), Some(hr1)) => Some(if hr0.t < hr1.t { hr0 } else { hr1 }),
-				}
-			},
-			BoundingVolumeInner::Container(sphere_indices) => (&spheres[sphere_indices.clone()]).hit(ray, interval),
+			skip: None,
+			inner: BoundingVolumeInner::Container { sphere_indices },
 		}
 	}
 }

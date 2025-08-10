@@ -10,8 +10,8 @@ pub fn split(nodes: &mut Vec<BoundingVolume>, spheres: &mut [Sphere], index: usi
 	let (c0, c1) = {
 		let bv = &mut nodes[index];
 		let sphere_indices = match &mut bv.inner {
-			BoundingVolumeInner::Split(..) => unimplemented!(),
-			BoundingVolumeInner::Container(spheres) => spheres.clone(),
+			BoundingVolumeInner::Split { .. } => unimplemented!(),
+			BoundingVolumeInner::Container { sphere_indices } => sphere_indices.clone(),
 		};
 
 		if sphere_indices.len() < 3 {
@@ -60,5 +60,21 @@ pub fn split(nodes: &mut Vec<BoundingVolume>, spheres: &mut [Sphere], index: usi
 	nodes.push(BoundingVolume::from_spheres(spheres, c1));
 	split(nodes, spheres, n1_index);
 
-	nodes[index].inner = BoundingVolumeInner::Split(n0_index, n1_index);
+	nodes[n0_index].skip = Some(n1_index);
+	nodes[n1_index].skip = nodes[index].skip;
+
+	nodes[index].inner = BoundingVolumeInner::Split {
+		left: n0_index,
+		right: n1_index,
+	}
+}
+pub fn skip_pass(nodes: &mut [BoundingVolume], index: usize, skip: Option<usize>) {
+	match nodes[index].inner {
+		BoundingVolumeInner::Container { .. } => nodes[index].skip = skip,
+		BoundingVolumeInner::Split { left, right } => {
+			nodes[index].skip = skip;
+			skip_pass(nodes, left, Some(right));
+			skip_pass(nodes, right, skip);
+		},
+	}
 }
