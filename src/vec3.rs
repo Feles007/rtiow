@@ -1,4 +1,4 @@
-use std::arch::x86_64::{__m128, _mm_extract_ps};
+use std::arch::x86_64::{__m128, _mm_extract_ps, _mm_max_ps, _mm_min_ps};
 use std::mem::transmute;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Neg, Sub, SubAssign};
 
@@ -56,11 +56,15 @@ impl Vec3 {
 			self.x() * rhs.y() - self.y() * rhs.x(),
 		)
 	}
+	#[inline]
 	pub fn min(self, rhs: Self) -> Self {
-		Self::new(self.x().min(rhs.x()), self.y().min(rhs.y()), self.z().min(rhs.z()))
+		let inner = unsafe { _mm_min_ps(self.inner, rhs.inner) };
+		Self { inner }
 	}
+	#[inline]
 	pub fn max(self, rhs: Self) -> Self {
-		Self::new(self.x().max(rhs.x()), self.y().max(rhs.y()), self.z().max(rhs.z()))
+		let inner = unsafe { _mm_max_ps(self.inner, rhs.inner) };
+		Self { inner }
 	}
 }
 impl Neg for Vec3 {
