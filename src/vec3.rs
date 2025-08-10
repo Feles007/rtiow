@@ -11,9 +11,6 @@ impl Vec3 {
 	pub const fn new(x: f32, y: f32, z: f32) -> Self {
 		Self { inner: [x, y, z] }
 	}
-	pub const fn splat(f: f32) -> Self {
-		Self::new(f, f, f)
-	}
 	pub fn x(self) -> f32 {
 		self.inner[0]
 	}
@@ -22,6 +19,9 @@ impl Vec3 {
 	}
 	pub fn z(self) -> f32 {
 		self.inner[2]
+	}
+	pub const fn splat(f: f32) -> Self {
+		Self::new(f, f, f)
 	}
 	pub fn with_x(self, x: f32) -> Self {
 		Self::new(x, self.y(), self.z())
