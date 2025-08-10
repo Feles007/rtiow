@@ -25,7 +25,7 @@ impl Hittable for Sphere {
 	fn hit(&self, ray: Ray, interval: Interval) -> Option<HitRecord> {
 		let oc = self.center - ray.origin();
 		let a = ray.direction().magnitude_squared();
-		let h = ray.direction().dot(&oc);
+		let h = ray.direction().dot(oc);
 		let c = oc.magnitude_squared() - self.radius * self.radius;
 
 		let discriminant = h * h - a * c;

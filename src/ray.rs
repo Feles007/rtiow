@@ -1,5 +1,5 @@
 use crate::utils::Point3;
-use glm::Vec3;
+use crate::vec3::Vec3;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Ray {

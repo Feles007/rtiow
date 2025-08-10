@@ -4,8 +4,8 @@ use crate::ray::Ray;
 use crate::rng;
 use crate::state::make_look;
 use crate::utils::{linear_to_gamma, Color};
+use crate::vec3::Vec3;
 use bytemuck::{Pod, Zeroable};
-use glm::{vec3, Vec3};
 use rayon::prelude::*;
 
 #[repr(C)]
@@ -41,11 +41,11 @@ impl Camera {
 		let viewport_height = 2.0 * h * focal_length;
 		let viewport_width = viewport_height * (width as f32 / height as f32);
 
-		let up_vector = vec3(0.0, 1.0, 0.0);
+		let up_vector = Vec3::new(0.0, 1.0, 0.0);
 
 		let w = direction.normalize();
-		let u = up_vector.cross(&w).normalize();
-		let v = w.cross(&u);
+		let u = up_vector.cross(w).normalize();
+		let v = w.cross(u);
 
 		let viewport_u = viewport_width * u;
 		let viewport_v = viewport_height * -v;
@@ -60,7 +60,7 @@ impl Camera {
 			let y = i as u32 / width;
 			let x = i as u32 % width;
 
-			let mut color = Color::zeros();
+			let mut color = Color::ZERO;
 			for _ in 0..self.samples_per_pixel {
 				let ray = get_ray(x, y, camera_center, pixel00_loc, pixel_delta_u, pixel_delta_v);
 				color += ray_color_simple(ray, world, self.max_depth);
@@ -72,9 +72,9 @@ impl Camera {
 			const INTERVAL: Interval = Interval::new(0.0, 0.999);
 
 			let rgb = [
-				(256.0 * INTERVAL.clamp(color.x)) as u8,
-				(256.0 * INTERVAL.clamp(color.y)) as u8,
-				(256.0 * INTERVAL.clamp(color.z)) as u8,
+				(256.0 * INTERVAL.clamp(color.x())) as u8,
+				(256.0 * INTERVAL.clamp(color.y())) as u8,
+				(256.0 * INTERVAL.clamp(color.z())) as u8,
 			];
 
 			pixel.r = rgb[0];
@@ -85,8 +85,9 @@ impl Camera {
 	}
 }
 fn get_ray(x: u32, y: u32, camera_center: Vec3, pixel00_loc: Vec3, pixel_delta_u: Vec3, pixel_delta_v: Vec3) -> Ray {
-	let offset = vec3(rng::f32() - 0.5, rng::f32() - 0.5, 0.0);
-	let pixel_sample = pixel00_loc + ((x as f32 + offset.x) * pixel_delta_u) + ((y as f32 + offset.y) * pixel_delta_v);
+	let offset = Vec3::new(rng::f32() - 0.5, rng::f32() - 0.5, 0.0);
+	let pixel_sample =
+		pixel00_loc + ((x as f32 + offset.x()) * pixel_delta_u) + ((y as f32 + offset.y()) * pixel_delta_v);
 	let ray_origin = camera_center;
 	let ray_direction = pixel_sample - camera_center;
 	Ray::new(ray_origin, ray_direction)
@@ -94,14 +95,14 @@ fn get_ray(x: u32, y: u32, camera_center: Vec3, pixel00_loc: Vec3, pixel_delta_u
 #[allow(unused)]
 fn ray_color(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u32) -> Color {
 	if depth == 0 {
-		return Color::zeros();
+		return Color::ZERO;
 	}
 	if let Some(hit_record) = world.hit(ray, Interval::new(0.001, f32::INFINITY)) {
 		let mat = world.get_material(hit_record.material);
 		return if let Some((scattered, attenuation)) = mat.scatter(ray, hit_record) {
-			attenuation.component_mul(&ray_color(scattered, world, depth - 1))
+			attenuation * ray_color(scattered, world, depth - 1)
 		} else {
-			Color::zeros()
+			Color::ZERO
 		};
 	}
 
@@ -134,14 +135,14 @@ fn ray_color_iterative(ray: Ray, world: &(impl Hittable + MaterialStore), depth:
 	let mut color_accumulator = background_color(current_ray);
 
 	while let Some(color) = colors.pop() {
-		color_accumulator = color_accumulator.component_mul(&color);
+		color_accumulator = color_accumulator * color;
 	}
 
 	color_accumulator
 }
 #[allow(unused)]
 fn ray_color_simple(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u32) -> Color {
-	let mut color = Vec3::zeros();
+	let mut color = Vec3::ZERO;
 	let mut first_color = true;
 
 	let mut current_ray = ray;
@@ -158,7 +159,7 @@ fn ray_color_simple(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u3
 				color = hit_color;
 				first_color = false;
 			} else {
-				color = color.component_mul(&hit_color);
+				color = color * hit_color;
 			}
 
 			if let Some(next_ray) = next_ray {
@@ -173,10 +174,10 @@ fn ray_color_simple(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u3
 
 	let bgc = background_color(current_ray);
 
-	if first_color { bgc } else { color.component_mul(&bgc) }
+	if first_color { bgc } else { color * bgc }
 }
 fn background_color(ray: Ray) -> Color {
 	let unit_direction = ray.direction().normalize();
-	let a = 0.5 * (unit_direction.y + 1.0);
-	(1.0 - a) * vec3(1.0, 1.0, 1.0) + a * vec3(0.5, 0.7, 1.0)
+	let a = 0.5 * (unit_direction.y() + 1.0);
+	(1.0 - a) * Vec3::new(1.0, 1.0, 1.0) + a * Vec3::new(0.5, 0.7, 1.0)
 }

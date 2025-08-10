@@ -1,4 +1,4 @@
-use glm::{vec3, Vec3};
+use crate::vec3::Vec3;
 use rand::Rng;
 
 const SIGN_EXP: u32 = 0x3F800000;
@@ -14,10 +14,10 @@ pub fn f32_range(min: f32, max: f32) -> f32 {
 	min + (max - min) * f32()
 }
 pub fn vector_range(min: f32, max: f32) -> Vec3 {
-	vec3(f32_range(min, max), f32_range(min, max), f32_range(min, max))
+	Vec3::new(f32_range(min, max), f32_range(min, max), f32_range(min, max))
 }
 pub fn vector() -> Vec3 {
-	vec3(f32(), f32(), f32())
+	Vec3::new(f32(), f32(), f32())
 }
 pub fn unit_vector() -> Vec3 {
 	loop {

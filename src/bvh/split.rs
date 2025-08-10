@@ -21,9 +21,9 @@ pub fn split(nodes: &mut Vec<BoundingVolume>, spheres: &mut [Sphere], index: usi
 		let spheres = &mut spheres[range.indices()];
 
 		let axis = {
-			let x_span = bv.aabb.min.x.abs() + bv.aabb.max.x.abs();
-			let y_span = bv.aabb.min.y.abs() + bv.aabb.max.y.abs();
-			let z_span = bv.aabb.min.z.abs() + bv.aabb.max.z.abs();
+			let x_span = bv.aabb.min.x().abs() + bv.aabb.max.x().abs();
+			let y_span = bv.aabb.min.y().abs() + bv.aabb.max.y().abs();
+			let z_span = bv.aabb.min.z().abs() + bv.aabb.max.z().abs();
 
 			if x_span > y_span && x_span > z_span {
 				Axis::X
@@ -35,9 +35,9 @@ pub fn split(nodes: &mut Vec<BoundingVolume>, spheres: &mut [Sphere], index: usi
 		};
 
 		spheres.sort_by(|a, b| match axis {
-			Axis::X => a.center.x.partial_cmp(&b.center.x).unwrap(),
-			Axis::Y => a.center.y.partial_cmp(&b.center.y).unwrap(),
-			Axis::Z => a.center.z.partial_cmp(&b.center.z).unwrap(),
+			Axis::X => a.center.x().partial_cmp(&b.center.x()).unwrap(),
+			Axis::Y => a.center.y().partial_cmp(&b.center.y()).unwrap(),
+			Axis::Z => a.center.z().partial_cmp(&b.center.z()).unwrap(),
 		});
 
 		range.split()

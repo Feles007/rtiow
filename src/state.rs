@@ -1,7 +1,7 @@
 use crate::app::ControlMap;
 use crate::bvh::BvhWorld;
 use crate::camera::Camera;
-use glm::{vec3, Vec3};
+use crate::vec3::Vec3;
 use pixels::{Pixels, SurfaceTexture};
 use std::f32::consts::FRAC_PI_2;
 use std::sync::Arc;
@@ -31,7 +31,7 @@ impl State {
 			samples_per_pixel: 10,
 			max_depth: 10,
 			fov: 75.0,
-			location: vec3(13.0, 2.0, 3.0),
+			location: Vec3::new(13.0, 2.0, 3.0),
 			pitch,
 			yaw,
 		};
@@ -86,9 +86,9 @@ impl State {
 		let ys = self.camera.yaw.sin();
 		let yc = self.camera.yaw.cos();
 
-		let backward = vec3(ys, 0.0, yc);
-		let up = vec3(0.0, 1.0, 0.0);
-		let left = backward.cross(&up);
+		let backward = Vec3::new(ys, 0.0, yc);
+		let up = Vec3::new(0.0, 1.0, 0.0);
+		let left = backward.cross(up);
 
 		if control_map.move_forward {
 			self.camera.location -= backward * movement_speed * delta_time;
@@ -118,5 +118,5 @@ impl State {
 	}
 }
 pub fn make_look(pitch: f32, yaw: f32) -> Vec3 {
-	vec3(yaw.sin() * pitch.cos(), pitch.sin(), yaw.cos() * pitch.cos())
+	Vec3::new(yaw.sin() * pitch.cos(), pitch.sin(), yaw.cos() * pitch.cos())
 }

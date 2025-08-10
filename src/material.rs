@@ -2,7 +2,7 @@ use crate::hit_record::HitRecord;
 use crate::ray::Ray;
 use crate::rng;
 use crate::utils::{near_zero, reflect, refract, Color};
-use glm::vec3;
+use crate::vec3::Vec3;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Material {
@@ -11,15 +11,10 @@ pub enum Material {
 	Dielectric { refraction_index: f32 },
 }
 impl Material {
-	pub fn scatter(
-		&self,
-		ray: Ray,
-		hit_record: HitRecord,
-	) -> Option<(Ray, Color)> {
+	pub fn scatter(&self, ray: Ray, hit_record: HitRecord) -> Option<(Ray, Color)> {
 		match self {
 			Self::Lambertian { albedo } => {
-				let mut scatter_direction =
-					hit_record.normal + rng::unit_vector();
+				let mut scatter_direction = hit_record.normal + rng::unit_vector();
 
 				if near_zero(scatter_direction) {
 					scatter_direction = hit_record.normal;
@@ -28,10 +23,9 @@ impl Material {
 			},
 			Self::Metal { albedo, fuzz } => {
 				let mut reflected = reflect(ray.direction(), hit_record.normal);
-				reflected =
-					reflected.normalize() + (*fuzz * rng::unit_vector());
+				reflected = reflected.normalize() + (*fuzz * rng::unit_vector());
 				let scattered = Ray::new(hit_record.point, reflected);
-				if scattered.direction().dot(&hit_record.normal) > 0.0 {
+				if scattered.direction().dot(hit_record.normal) > 0.0 {
 					Some((Ray::new(hit_record.point, reflected), *albedo))
 				} else {
 					//None
@@ -39,7 +33,7 @@ impl Material {
 				}
 			},
 			Self::Dielectric { refraction_index } => {
-				let attenuation = vec3(1.0, 1.0, 1.0);
+				let attenuation = Vec3::new(1.0, 1.0, 1.0);
 				let ri = if hit_record.front_face {
 					1.0 / refraction_index
 				} else {
@@ -47,12 +41,10 @@ impl Material {
 				};
 
 				let unit_direction = ray.direction().normalize();
-				let cos_theta =
-					(-unit_direction).dot(&hit_record.normal).min(1.0);
+				let cos_theta = (-unit_direction).dot(hit_record.normal).min(1.0);
 				let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
-				let direction = if (ri * sin_theta > 1.0)
-					|| reflectance(cos_theta, ri) > rng::f32()
+				let direction = if (ri * sin_theta > 1.0) || reflectance(cos_theta, ri) > rng::f32()
 				// Cannot refract
 				{
 					reflect(unit_direction, hit_record.normal)
