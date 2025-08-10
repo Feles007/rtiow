@@ -6,6 +6,7 @@ pub struct Vec3 {
 }
 impl Vec3 {
 	pub const ZERO: Self = Self::splat(0.0);
+	pub const ONE: Self = Self::splat(1.0);
 
 	pub const fn new(x: f32, y: f32, z: f32) -> Self {
 		Self { inner: [x, y, z] }

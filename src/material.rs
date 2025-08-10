@@ -33,7 +33,7 @@ impl Material {
 				}
 			},
 			Self::Dielectric { refraction_index } => {
-				let attenuation = Vec3::new(1.0, 1.0, 1.0);
+				let attenuation = Vec3::ONE;
 				let ri = if hit_record.front_face {
 					1.0 / refraction_index
 				} else {

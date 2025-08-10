@@ -35,7 +35,7 @@ fn make_world() -> World {
 	let mut world = World::new();
 
 	let ground_material = world.add_material(Material::Lambertian {
-		albedo: Vec3::new(0.5, 0.5, 0.5),
+		albedo: Vec3::splat(0.5),
 	});
 	world.add_sphere(Sphere::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0, ground_material));
 

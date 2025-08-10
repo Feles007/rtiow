@@ -179,5 +179,5 @@ fn ray_color_simple(ray: Ray, world: &(impl Hittable + MaterialStore), depth: u3
 fn background_color(ray: Ray) -> Color {
 	let unit_direction = ray.direction().normalize();
 	let a = 0.5 * (unit_direction.y() + 1.0);
-	(1.0 - a) * Vec3::new(1.0, 1.0, 1.0) + a * Vec3::new(0.5, 0.7, 1.0)
+	(1.0 - a) * Vec3::ONE + a * Vec3::new(0.5, 0.7, 1.0)
 }
