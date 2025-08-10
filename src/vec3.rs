@@ -1,4 +1,7 @@
-use std::arch::x86_64::{__m128, _mm_extract_ps, _mm_max_ps, _mm_min_ps, _mm_movehl_ps, _mm_rcp_ps, _mm_shuffle_ps};
+use std::arch::x86_64::{
+	__m128, _mm_add_ps, _mm_div_ps, _mm_extract_ps, _mm_max_ps, _mm_min_ps, _mm_movehl_ps, _mm_mul_ps, _mm_rcp_ps,
+	_mm_shuffle_ps, _mm_sub_ps,
+};
 use std::mem::transmute;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Neg, Sub, SubAssign};
 
@@ -102,7 +105,8 @@ impl Add for Vec3 {
 	type Output = Self;
 
 	fn add(self, rhs: Self) -> Self::Output {
-		Self::new(self.x() + rhs.x(), self.y() + rhs.y(), self.z() + rhs.z())
+		let inner = unsafe { _mm_add_ps(self.inner, rhs.inner) };
+		Self { inner }
 	}
 }
 impl AddAssign for Vec3 {
@@ -114,7 +118,8 @@ impl Sub for Vec3 {
 	type Output = Self;
 
 	fn sub(self, rhs: Self) -> Self::Output {
-		Self::new(self.x() - rhs.x(), self.y() - rhs.y(), self.z() - rhs.z())
+		let inner = unsafe { _mm_sub_ps(self.inner, rhs.inner) };
+		Self { inner }
 	}
 }
 impl SubAssign for Vec3 {
@@ -126,7 +131,8 @@ impl Mul for Vec3 {
 	type Output = Self;
 
 	fn mul(self, rhs: Self) -> Self::Output {
-		Self::new(self.x() * rhs.x(), self.y() * rhs.y(), self.z() * rhs.z())
+		let inner = unsafe { _mm_mul_ps(self.inner, rhs.inner) };
+		Self { inner }
 	}
 }
 impl Mul<f32> for Vec3 {
@@ -147,7 +153,8 @@ impl Div for Vec3 {
 	type Output = Self;
 
 	fn div(self, rhs: Self) -> Self::Output {
-		Self::new(self.x() / rhs.x(), self.y() / rhs.y(), self.z() / rhs.z())
+		let inner = unsafe { _mm_div_ps(self.inner, rhs.inner) };
+		Self { inner }
 	}
 }
 impl Div<f32> for Vec3 {
