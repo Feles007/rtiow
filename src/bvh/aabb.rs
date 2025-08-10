@@ -14,13 +14,9 @@ impl Aabb {
 		let t1 = (self.min - ray.origin()) * inv;
 		let t2 = (self.max - ray.origin()) * inv;
 
-		let mut tmin = t1.min(t2).horizontal_max();
+		let tmin = t1.min(t2).horizontal_max();
 		let tmax = t1.max(t2).horizontal_min();
 
-		if tmin < 0.0 {
-			tmin = 0.0;
-		}
-
-		tmax > tmin
+		tmax > tmin.max(0.0)
 	}
 }
