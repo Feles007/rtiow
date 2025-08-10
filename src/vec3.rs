@@ -1,24 +1,29 @@
+use std::arch::x86_64::{__m128, _mm_extract_ps};
+use std::mem::transmute;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Neg, Sub, SubAssign};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
-	inner: [f32; 3],
+	inner: __m128,
 }
 impl Vec3 {
 	pub const ZERO: Self = Self::splat(0.0);
 	pub const ONE: Self = Self::splat(1.0);
 
 	pub const fn new(x: f32, y: f32, z: f32) -> Self {
-		Self { inner: [x, y, z] }
+		let array = [x, y, z, 0.0];
+		Self {
+			inner: unsafe { transmute(array) },
+		}
 	}
 	pub fn x(self) -> f32 {
-		self.inner[0]
+		unsafe { f32::from_bits(_mm_extract_ps::<0>(self.inner) as u32) }
 	}
 	pub fn y(self) -> f32 {
-		self.inner[1]
+		unsafe { f32::from_bits(_mm_extract_ps::<1>(self.inner) as u32) }
 	}
 	pub fn z(self) -> f32 {
-		self.inner[2]
+		unsafe { f32::from_bits(_mm_extract_ps::<2>(self.inner) as u32) }
 	}
 	pub const fn splat(f: f32) -> Self {
 		Self::new(f, f, f)
