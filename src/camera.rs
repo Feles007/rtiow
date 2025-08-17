@@ -4,8 +4,8 @@ use crate::ray::Ray;
 use crate::rng;
 use crate::state::make_look;
 use crate::utils::{linear_to_gamma, Color};
-use crate::vec3::Vec3;
 use bytemuck::{Pod, Zeroable};
+use fml::Vec3;
 use rayon::prelude::*;
 
 #[repr(C)]

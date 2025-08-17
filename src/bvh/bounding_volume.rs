@@ -1,7 +1,7 @@
 use crate::bvh::aabb::Aabb;
 use crate::bvh::object_range::ObjectRange;
 use crate::sphere::Sphere;
-use crate::vec3::Vec3;
+use fml::Vec3;
 
 #[derive(Debug)]
 pub struct BoundingVolume {

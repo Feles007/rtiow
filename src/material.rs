@@ -2,7 +2,7 @@ use crate::hit_record::HitRecord;
 use crate::ray::Ray;
 use crate::rng;
 use crate::utils::{near_zero, reflect, refract, Color};
-use crate::vec3::Vec3;
+use fml::Vec3;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Material {

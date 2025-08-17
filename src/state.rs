@@ -1,7 +1,7 @@
 use crate::app::ControlMap;
 use crate::bvh::BvhWorld;
 use crate::camera::Camera;
-use crate::vec3::Vec3;
+use fml::Vec3;
 use pixels::{Pixels, SurfaceTexture};
 use std::f32::consts::FRAC_PI_2;
 use std::sync::Arc;

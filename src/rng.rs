@@ -1,4 +1,4 @@
-use crate::vec3::Vec3;
+use fml::Vec3;
 use rand::Rng;
 
 const SIGN_EXP: u32 = 0x3F800000;

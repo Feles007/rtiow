@@ -1,7 +1,7 @@
 use crate::material::MaterialReference;
 use crate::ray::Ray;
 use crate::utils::Point3;
-use crate::vec3::Vec3;
+use fml::Vec3;
 
 pub struct HitRecord {
 	pub point: Point3,

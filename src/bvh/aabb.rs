@@ -1,5 +1,5 @@
 use crate::ray::Ray;
-use crate::vec3::Vec3;
+use fml::Vec3;
 
 #[derive(Debug)]
 pub struct Aabb {

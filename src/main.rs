@@ -10,15 +10,14 @@ mod rng;
 mod sphere;
 mod state;
 mod utils;
-mod vec3;
 mod world;
 
 use crate::app::App;
 use crate::bvh::BvhWorld;
 use crate::material::Material;
 use crate::sphere::Sphere;
-use crate::vec3::Vec3;
 use crate::world::World;
+use fml::Vec3;
 use winit::event_loop::{ControlFlow, EventLoop};
 
 fn main() {
