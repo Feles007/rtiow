@@ -1,14 +1,14 @@
 use crate::ray::Ray;
 use fml::Vec3;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Aabb {
 	pub min: Vec3,
 	pub max: Vec3,
 }
 impl Aabb {
 	// https://tavianator.com/2015/ray_box_nan.html
-	pub fn basic_hit(&self, ray: Ray) -> bool {
+	pub fn basic_hit(self, ray: Ray) -> bool {
 		let inv = ray.direction().reciprocal();
 
 		let t1 = (self.min - ray.origin()) * inv;
